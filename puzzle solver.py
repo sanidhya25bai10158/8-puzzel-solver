@@ -99,3 +99,124 @@ def can_solve(grid):
             if flat[i]>flat[j]:
                 inv += 1
     return inv % 2 == 0
+
+
+def show(grid):
+    print("")
+    for row in grid:
+        line = "  |"
+        for v in row:
+            line += f" {'_' if v==0 else v}"
+        line += " |"
+        print(line)
+    print("")
+
+
+def print_steps(path):
+    print(f"\n  solved in {len(path)-1} move(s)\n")
+    for i, s in enumerate(path):
+        if i==0:
+            print("  start:")
+        else:
+            print(f"\n  step {i} - {s['move']}")
+        show(s["grid"])
+
+
+def read_puzzle():
+    print("\n  enter the puzzle one row at a time (use 0 for blank)")
+    print("  example row: 1 2 3\n")
+    grid = []
+    seen = set()
+    for i in range(3):
+        while True:
+            raw = input(f"  row {i+1}: ").strip().split()
+            if len(raw) != 3:
+                print("  need exactly 3 numbers")
+                continue
+            try:
+                row = list(map(int, raw))
+            except:
+                print("  only integers please")
+                continue
+            if not all(0<=x<=8 for x in row):
+                print("  numbers must be 0-8")
+                continue
+            if any(x in seen for x in row):
+                print("  duplicate number, try again")
+                continue
+            seen.update(row)
+            grid.append(row)
+            break
+    return grid
+
+
+# some puzzles to test with
+PRESETS = {"1": {"label": "easy   (1 move)",  "grid": [[1,2,3],[4,5,6],[7,0,8]]},
+    "2": {"label": "medium (10 moves)","grid": [[1,2,3],[5,0,6],[4,7,8]]},
+    "3": {"label": "hard   (20 moves)","grid": [[8,1,3],[4,0,2],[7,6,5]]},
+    "4": {"label": "expert (26 moves)","grid": [[8,6,7],[2,5,4],[3,0,1]]},}
+
+
+def main():
+    print("\n")
+    print("   8-puzzle solver  |  A* search")
+    print("")
+
+    print("  [1] pick a preset")
+    print("  [2] enter your own")
+    print("  [3] quit")
+
+    c = input("\n  choice: ").strip()
+
+    if c=="3":
+        print("\n  bye!\n")
+        return
+
+    if c=="1":
+        print()
+        for k,v in PRESETS.items():
+            print(f"  [{k}] {v['label']}")
+        pick= input("\n  choice: ").strip()
+        if pick not in PRESETS:
+            print("  invalid, exiting")
+            return
+        grid= PRESETS[pick]["grid"]
+
+    elif c=="2":
+        grid = read_puzzle()
+
+    else:
+        print("  invalid, exiting")
+        return
+
+    print("\n  your puzzle:")
+    show(grid)
+
+    if not can_solve(grid):
+        print("\n  this configuration has no solution (odd inversions)\n")
+        return
+
+    print("\n  working on it...")
+    result= solve(grid)
+
+    if not result:
+        print("  no solution found")
+        return
+
+    path=get_path(result)
+
+    print(f"\n  done! optimal solution = {len(path)-1} moves")
+    print(f"  initial heuristic (manhattan) = {heuristic(to_tuple(grid))}")
+
+    see = input("\n  show steps? [y/n]: ").strip().lower()
+    if see=="y":
+        print_steps(path)
+    else:
+        moves = [s["move"] for s in path if s["move"]]
+        print("\n  moves: " + " -> ".join(moves))
+
+    print("\n \n")
+
+
+if __name__ == "__main__":
+    main()
